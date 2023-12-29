@@ -65,4 +65,4 @@ def index():
     return render_template('index.html', date=formatted_date, currency_rates=currency_rates_with_data, base_flag_url=base_flag_url, author=author)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
