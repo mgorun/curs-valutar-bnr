@@ -50,7 +50,7 @@
 
 ```sh
     $ pip install Flask
-    $ pip install request
+    $ pip install requests
 ```
 
 ## AND ... BOOM : Lansam aplicatia! :rocket:
