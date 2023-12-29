@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curs Valutar - {{ author }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <header>
+            <div class="mt-4">
+                <h4 class="mb-0">Cursul de schimb BNR - RON</h4>
+                <p class="fw-lighter">valabil la data de {{ date }}</p>
+            </div>
+        </header>
+
+        
+        <main>
+            <table class="table table-bordered table-hover">
+                <thead class="table-primary">
+                    <tr>
+                        <th scope="col">Flag</th>
+                        <th scope="col">Simbol</th>
+                        <th scope="col">Denumire</th>
+                        <th scope="col">RON</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for currency, data in currency_rates.items() %}
+                    <tr>
+                        <td>
+                            {% if data.flag_suffix %}
+                                <img src="{{ base_flag_url }}{{ data.flag_suffix }}.svg" alt="{{ currency }} flag" width="30" class="flag-b">
+                            {% else %}
+                            <!-- vezi cazul XAU si XDR unde nu afisam momentan flag -->
+                            {% endif %}
+                        </td>
+                        <td>{{ currency }}</td>
+                        <td>{{ data.name }}</td>
+                        <td>{{ data.rate }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </main>
+
+        <footer>
+            <p class="text-center fw-lighter"><small>Copyright - {{ author }}</small></p>
+            
+        </footer>
+
+    </div>
+
+
+
+</body>
+</html>
