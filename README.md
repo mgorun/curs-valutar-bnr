@@ -63,4 +63,4 @@ $  python3 app.py
 ## Feedback and Support 📩
 Va rugam sa ne contactati la adresa 
 
-mircea@softdesk.ro
+mircea@softdesk.ro 
