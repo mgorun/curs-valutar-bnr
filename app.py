@@ -1,15 +1,16 @@
-from flask import Flask, render_template
+import os
+import json
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime
-import json
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
-# Definim o functie care sa preia datele dintr-un XML
+# --- Helper Functions ---
+
 def fetch_xml_data(url):
     response = requests.get(url)
-    
     if response.status_code == 200:
         return response.text
     else:
@@ -17,52 +18,68 @@ def fetch_xml_data(url):
 
 def parse_xml(xml_string):
     root = ET.fromstring(xml_string)
-    
-    # Definim un dictionar in care vom salva cursul BNR
     currencies = {}
-
-    # Cautam si preluam Data cursului BNR
-    cube_element = root.find(".//{http://www.bnr.ro/xsd}Body//{http://www.bnr.ro/xsd}Cube[@date]")
+    
+    # Namespace for BNR XML
+    namespace = {'bnr': 'http://www.bnr.ro/xsd'}
+    
+    cube_element = root.find(".//bnr:Cube[@date]", namespace)
     date = cube_element.get("date") if cube_element is not None else None
 
-    # Verificam
     if cube_element is not None:
-        # Iteram
-        for rate_element in cube_element.findall(".//{http://www.bnr.ro/xsd}Rate"):
+        for rate_element in cube_element.findall(".//bnr:Rate", namespace):
             currency_code = rate_element.get("currency")
-            rate = float(rate_element.text)
-            currencies[currency_code] = rate
+            try:
+                rate = float(rate_element.text)
+                currencies[currency_code] = rate
+            except (ValueError, TypeError):
+                continue
 
-    # Returnam data si cursul valutar BNR
     return date, currencies
- 
 
-# Link catre steagurile tarilor
-base_flag_url = "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.9.0/flags/4x3/"
+# --- Routes ---
 
-# Preluam datele din JSON intr-un dictionar
-with open('currency_data.json', 'r') as json_file:
-    currency_data = json.load(json_file)
-
-# Definim pagina noastra de index in Flask unde vom afisa informatiile
 @app.route('/')
 def index():
-
-    # Acesta este URL-ul de unde preluam cursul valutar BNR
-    url = "https://www.bnr.ro/nbrfxrates.xml"
+    # 1. Define paths safely using os
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    json_path = os.path.join(basedir, 'currency_data.json')
     
-    xml_data = fetch_xml_data(url)
-    date, currency_rates = parse_xml(xml_data)
+    # 2. Load JSON data safely
+    try:
+        with open(json_path, 'r', encoding='utf-8') as json_file:
+            currency_data = json.load(json_file)
+    except FileNotFoundError:
+        currency_data = {} # Fallback if file is missing
 
-    formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d-%m-%Y")
+    # 3. Fetch and parse BNR data
+    url = "https://www.bnr.ro/nbrfxrates.xml"
+    base_flag_url = "https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/2.9.0/flags/4x3/"
+    
+    try:
+        xml_data = fetch_xml_data(url)
+        date, currency_rates = parse_xml(xml_data)
+        
+        if date:
+            formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d-%m-%Y")
+        else:
+            formatted_date = "N/A"
 
-    currency_rates_with_data = {
-        code: {"rate": rate, **currency_data.get(code, {})} for code, rate in currency_rates.items()
-    }
+        # 4. Merge data
+        currency_rates_with_data = {
+            code: {"rate": rate, **currency_data.get(code, {})} 
+            for code, rate in currency_rates.items()
+        }
 
-    author = 'SoftDesk'
+        return render_template('index.html', 
+                               date=formatted_date, 
+                               currency_rates=currency_rates_with_data, 
+                               base_flag_url=base_flag_url, 
+                               author='SoftDesk')
+    
+    except Exception as e:
+        return f"Error fetching data: {str(e)}", 500
 
-    return render_template('index.html', date=formatted_date, currency_rates=currency_rates_with_data, base_flag_url=base_flag_url, author=author)
-
+# Required for local testing, Vercel ignores this
 if __name__ == "__main__":
-    app.run(debug=False)
+    app.run(debug=True)
