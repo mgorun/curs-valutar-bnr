@@ -24,7 +24,7 @@
 
 ![Curs BNR](image.png)
 
-Vezi live in Google Cloud Platform 👉 [Curs Valutar BNR](https://curs-valutar-bnr-409622.lm.r.appspot.com/)
+Vezi live 👉 [Curs Valutar BNR](https://curs-valutar-bnr.vercel.app/)
 
 ## Pregatirea proiectului ⚙️
 
